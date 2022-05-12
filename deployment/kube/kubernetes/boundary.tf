@@ -33,10 +33,14 @@ resource "kubernetes_deployment" "boundary" {
         }
 
         init_container {
-          name    = "boundary-init"
-          image   = "hashicorp/boundary:0.1.8"
-          command = ["/bin/sh", "-c"]
-          args    = ["boundary database init -config /boundary/boundary.hcl"]
+          name  = "boundary-init"
+          image = "hashicorp/boundary:0.1.8"
+          args = [
+            "database",
+            "init",
+            "-config",
+            "/boundary/boundary.hcl"
+          ]
 
           volume_mount {
             name       = "boundary-config"
@@ -66,8 +70,11 @@ resource "kubernetes_deployment" "boundary" {
             read_only  = true
           }
 
-          command = ["/bin/sh", "-c"]
-          args    = ["boundary server -config /boundary/boundary.hcl"]
+          args = [
+            "server",
+            "-config",
+            "/boundary/boundary.hcl"
+          ]
 
           env {
             name  = "BOUNDARY_PG_URL"
@@ -87,6 +94,20 @@ resource "kubernetes_deployment" "boundary" {
           }
           port {
             container_port = 9202
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/"
+              port = 9200
+            }
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = 9200
+            }
           }
         }
       }
